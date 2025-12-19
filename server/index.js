@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -57,13 +58,16 @@ app.post("/signup", async (req, res) => {
     });
   }
 
+  const salt = bcrypt.genSaltSync(10);
+  const encryptedPassword = bcrypt.hashSync(password, salt);
+
   const newUser = new User({
     name,
     email,
     mobile,
     city,
     country,
-    password,
+    password: encryptedPassword,
   });
 
   try {
@@ -102,9 +106,21 @@ app.post("/login", async (req, res) => {
     });
   }
 
-  const existingUser = await User.findOne({ email, password }).select("-password");
+  const existingUser = await User.findOne({ email });
 
-  if (existingUser) {
+  if (!existingUser) {
+    return res.json({
+      success: false,
+      message: "User doesn't exist with this email, please sign up",
+      data: null,
+    });
+  }
+
+  const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
+
+  existingUser.password = undefined; // Hide password in response
+
+  if (isPasswordCorrect) {
     return res.json({
       success: true,
       message: "Login successful",
