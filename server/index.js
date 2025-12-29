@@ -1,11 +1,17 @@
-import bcrypt from "bcryptjs";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import connectDB from "./db.js";
-import User from "./models/User.js";
 
 dotenv.config();
+
+// Routes
+import { postLogin, postSignup } from "./controllers/auth.js";
+import { getHealth, getHome } from "./controllers/health.js";
+import { getTours, postTours } from "./controllers/tours.js";
+
+// Middleware
+import { checkJWT } from "./middlewares/jwt.js";
 
 const app = express();
 app.use(express.json());
@@ -13,127 +19,17 @@ app.use(cors());
 
 const PORT = process.env.PORT || 8080;
 
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to Tiny Tours" });
-});
+// health routes
+app.get("/", getHome);
+app.get("/health", getHealth);
 
-app.get("/health", (req, res) => {
-  res.json({ status: "OK" });
-});
+// auth routes
+app.post("/signup", postSignup);
+app.post("/login", postLogin);
 
-app.post("/signup", async (req, res) => {
-  const { name, email, mobile, city, country, password } = req.body;
-
-  if (!name) {
-    return res.json({
-      success: false,
-      message: "Name is required",
-      data: null,
-    });
-  }
-
-  if (!email) {
-    return res.json({
-      success: false,
-      message: "Email is required",
-      data: null,
-    });
-  }
-
-  if (!password) {
-    return res.json({
-      success: false,
-      message: "Password is required",
-      data: null,
-    });
-  }
-
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser) {
-    return res.json({
-      success: false,
-      message: "User with this email already exists",
-      data: null,
-    });
-  }
-
-  const salt = bcrypt.genSaltSync(10);
-  const encryptedPassword = bcrypt.hashSync(password, salt);
-
-  const newUser = new User({
-    name,
-    email,
-    mobile,
-    city,
-    country,
-    password: encryptedPassword,
-  });
-
-  try {
-    const savedUser = await newUser.save();
-
-    return res.json({
-      success: true,
-      message: "User registered successfully",
-      data: savedUser,
-    });
-  } catch (error) {
-    return res.json({
-      success: false,
-      message: `User registration failed: ${error.message}`,
-      data: null,
-    });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email) {
-    return res.json({
-      success: false,
-      message: "Email is required",
-      data: null,
-    });
-  }
-
-  if (!password) {
-    return res.json({
-      success: false,
-      message: "Password is required",
-      data: null,
-    });
-  }
-
-  const existingUser = await User.findOne({ email });
-
-  if (!existingUser) {
-    return res.json({
-      success: false,
-      message: "User doesn't exist with this email, please sign up",
-      data: null,
-    });
-  }
-
-  const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
-
-  existingUser.password = undefined; // Hide password in response
-
-  if (isPasswordCorrect) {
-    return res.json({
-      success: true,
-      message: "Login successful",
-      data: existingUser,
-    });
-  } else {
-    return res.json({
-      success: false,
-      message: "Invalid email or password",
-      data: null,
-    });
-  }
-});
+// tours routes
+app.post("/tours", checkJWT, postTours);
+app.get("/tours", checkJWT, getTours);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
