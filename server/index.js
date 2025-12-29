@@ -8,7 +8,7 @@ dotenv.config();
 // Routes
 import { postLogin, postSignup } from "./controllers/auth.js";
 import { getHealth, getHome } from "./controllers/health.js";
-import { getTours, postTours } from "./controllers/tours.js";
+import { getTours, postTours, putTours } from "./controllers/tours.js";
 
 // Middleware
 import { checkJWT } from "./middlewares/jwt.js";
@@ -30,6 +30,7 @@ app.post("/login", postLogin);
 // tours routes
 app.post("/tours", checkJWT, postTours);
 app.get("/tours", checkJWT, getTours);
+app.put("/tours/:id", checkJWT, putTours);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -46,4 +46,50 @@ const postTours = async (req, res) => {
   }
 };
 
-export { getTours, postTours };
+const putTours = async (req, res) => {
+  const user = req.user;
+  const userId = user.id;
+  const { id } = req.params;
+
+  const tour = await Tour.findById(id);
+
+  if (!tour) {
+    return res.json({
+      success: false,
+      message: "Tour not found",
+      data: null,
+    });
+  }
+
+  if (tour.user.toString() !== userId) {
+    return res.json({
+      success: false,
+      message: "Unauthorized to update this tour",
+      data: null,
+    });
+  }
+
+  const { title, description, cities, startDate, endDate, photos } = req.body;
+
+  await Tour.updateOne(
+    { _id: id },
+    {
+      title,
+      description,
+      cities,
+      startDate,
+      endDate,
+      photos,
+    }
+  );
+
+  const updatedTour = await Tour.findById(id);
+
+  return res.json({
+    success: true,
+    message: "Tour updated successfully",
+    data: updatedTour,
+  });
+};
+
+export { getTours, postTours, putTours };
