@@ -30,7 +30,7 @@ function NewTour() {
   const authenticator = async () => {
     try {
       // Perform the request to the upload authentication endpoint.
-      const response = await fetch("http://localhost:8080/auth");
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth`);
       if (!response.ok) {
         // If the server response is not successful, extract the error text for debugging.
         const errorText = await response.text();
@@ -111,7 +111,7 @@ function NewTour() {
   };
 
   const addTour = async () => {
-    const response = await axios.post("http://localhost:8080/tours", newTour, {
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/tours`, newTour, {
       headers: {
         Authorization: `Bearer ${getUserJwtToken()}`,
       },

@@ -18,7 +18,10 @@ function Login() {
   });
 
   const checkUserLogin = async () => {
-    const response = await axios.post("http://localhost:8080/login", loginUser);
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/login`,
+      loginUser,
+    );
 
     console.log(response.data);
 
